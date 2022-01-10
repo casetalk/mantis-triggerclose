@@ -19,10 +19,7 @@ class TriggerClosePlugin extends MantisPlugin {
 		if(!plugin_config_get('maybe_close_active')) {
 			return false;
 		}
-		if(mt_rand(1, 4) != 3) {
-			return;
-		}
-		$this->api->auto_close();
+		$this->api->auto_close(); 
 	}
 
 	/**
@@ -45,14 +42,14 @@ class TriggerClosePlugin extends MantisPlugin {
 	function register() {
 		$this->name = 'TriggerClose';
 		$this->description = 'Automatically closes issues based on terms such as "feedback has been the last status for two months and no changes has been made"';
-		$this->version = 0.1;
+		$this->version = 0.2;
 		$this->requires = array(
-			'MantisCore' => '1.2.0'
+			'MantisCore' => '2.0.0'
 		);
 		$this->page = 'config';
 
-		$this->author = 'Carl Helmertz';
-		$this->contact = 'helmertz@gmail.com';
+		$this->author = 'Carl Helmertz;Marco Wobben';
+		$this->contact = 'helmertz@gmail.com;marcow@bcp-software.nl';
 		$this->url = 'https://github.com/chelmertz/mantis-triggerclose';
 	}
 }

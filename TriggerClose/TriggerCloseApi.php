@@ -4,7 +4,7 @@ require_once dirname(__FILE__).'/../../core.php';
 
 class TriggerCloseApi {
 
-	const MIN_SECONDS = 300;
+	const MIN_DAYS = 3;
 	const DISABLED = 0;
 
 	private static $verbose;
@@ -63,7 +63,7 @@ class TriggerCloseApi {
 			plugin_config_get('categories'),
 			plugin_config_get('statuses'),
 			plugin_config_get('privileges'),
-			plugin_config_get('after_seconds'),
+			plugin_config_get('after_days'),
 			plugin_config_get('message')
 		);
 	}
@@ -159,16 +159,16 @@ USAGE;
 		}
 		return $usage;
 	}
-	
+
 	/**
 	 * @param array $categories
 	 * @param array $statuses
-	 * @param int $after_seconds
+	 * @param int $after_days
 	 * @param string $message
 	 * @return array [int id] => string summary
 	 * @throws InvalidArgumentException
 	 */
-	function close_issues_matching_criteria(array $categories, array $statuses, array $privileges, $after_seconds, $message) {
+	function close_issues_matching_criteria(array $categories, array $statuses, array $privileges, $after_days, $message) {
 		if(!$categories) {
 			throw new InvalidArgumentException("You must provide at least one category for me to scan for issues in");
 		}
@@ -185,13 +185,13 @@ USAGE;
 			}
 		}
 
-		$after_seconds = (int) $after_seconds;
-		if(self::DISABLED == $after_seconds && PHP_SAPI != "cli") {
+		$after_days = (int) $after_days;
+		if(self::DISABLED == $after_days && PHP_SAPI != "cli") {
 			// Let the cli version fall through to the next check
 			return array();
 		}
-		if($after_seconds < self::MIN_SECONDS) {
-			throw new InvalidArgumentException("Must provide at least ".self::MIN_SECONDS." as seconds lapsed before issue should be closed ($after_seconds given)");
+		if($after_days < self::MIN_DAYS) {
+			throw new InvalidArgumentException("Must provide at least ".self::MIN_DAYS." as days lapsed before issue should be closed ($after_days given)");
 		}
 
 		if(!$message) {
@@ -221,8 +221,9 @@ USAGE;
 				AND
 				bt.category_id IN (%s)
 			GROUP BY
-				bht.bug_id",
-				time() - $after_seconds,
+				bht.bug_id
+			LIMIT 0, 10", // max 10 tickets at a time for easing the db and cpu usage
+				strtotime("-$after_days days", time()), // time() - $after_days,
 				"'".implode("', '", $privileges)."'",
 				"'".implode("', '", $statuses)."'",
 				"'".implode("', '", $categories)."'"
@@ -230,8 +231,12 @@ USAGE;
 		$query = db_query($sql);
 		$count = db_num_rows($query);
 		if(!$count) {
-			return array();
+		    //echo "Autoclosed no tickets..<br/>".$sql;
+		    return array();
 		}
+
+		//echo "Autoclosed $count ticket(s)..";
+
 		$closed = array();
 		while($count--) {
 			$row = db_fetch_array($query);
@@ -255,11 +260,11 @@ USAGE;
 		unset($privileges[$admin]);
 		return array(
 			'maybe_close_active' => 0,
-			'after_seconds' => 0,
-			'message' => 'Closing automatically, stayed too long in feedback state. Feel free to re-open with additional information if you think the issue is not resolved.',
+			'after_days' => 0,
+			'message' => 'Closing automatically, stayed too long in a state. Feel free to re-open with additional information if you think the issue is not handled properly.',
 			'categories' => array(),
 			'userrights' => array(),
-			'statuses' => array(FEEDBACK),
+			'statuses' => array(RESOLVED),
 			'privileges' => $privileges,
 			'user' => 1
 		);

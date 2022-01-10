@@ -1,9 +1,11 @@
 <?php
 
-auth_reauthenticate();
-access_ensure_global_level(config_get('manage_plugin_threshold'));
+//form_security_validate( 'plugin_TriggerClose_config' );
+access_ensure_global_level( config_get( 'manage_plugin_threshold' ) );
 
-html_page_top('TriggerClose');
+//$t_redirect_url = plugin_page( 'config', true );
+layout_page_header( null, $t_redirect_url );
+layout_page_begin();
 
 print_manage_menu();
 
@@ -70,8 +72,8 @@ if(isset($_SESSION['TriggerClose_flash_message'])) {
 
 <tr <?php echo helper_alternate_class()?>>
 	<td valign="top">
-		<label for="after_seconds">Close a ticket that haven't been modified after this many seconds</label>
-		<br /><span class="small">0 means it's disabled, <?php echo TriggerCloseApi::MIN_SECONDS ?> is minimum</span>
+		<label for="after_seconds">Close a ticket that haven't been modified after this many days</label>
+		<br /><span class="small">0 means it's disabled, <?php echo TriggerCloseApi::MIN_DAYS ?> is minimum</span>
 	</td>
 	<td valign="top">
 		<input type="text" id="after_seconds" name="after_seconds" value="<?php echo plugin_config_get('after_seconds') ?>" />
@@ -157,4 +159,8 @@ if(isset($_SESSION['TriggerClose_flash_message'])) {
 into a crontab (for example, by typing <pre>crontab -e</pre> as a user which can execute that file.</p>
 
 <?php
-html_page_bottom();
+// html_page_bottom();
+
+//form_security_purge( 'plugin_TriggerClose_config' );
+//html_operation_successful( $t_redirect_url );
+layout_page_end();
